@@ -32,8 +32,6 @@ os.chdir(working_path)# change working directory
 
 
 ##test chrome driver ch
-#browser = webdriver.Chrome("C:\Program Files (x86)\Google\Chrome\Application\chromedriver.exe")
-#browser.get("http://www.baidu.com/")
 def check_stationary(ts):
     """
     This function checks if a time series is stationary in a naive way:
@@ -224,39 +222,6 @@ class SARIMA(ARIMA):
     
 
 from datetime import date
-
-def seperate_generated(ts, freq):
-#    date = init_date
-    today = date.today()
-    cripath = r'\\dirac\CRI3\OfficialTest_AggDTD_SBChinaNA\ProductionData\Historical'
-    files = [i for i in os.listdir(cripath) if len(i)==6 ]
-    files.sort()
-    cridate = int(files[-1])
-    if min(freq) == 1:
-        for i in range(len(ts)):
-            if cridate < today.year*100+today.month:
-                if(ts[i][0] == np.floor(cridate/100) and ts[i][1]==cridate-np.floor(cridate/100)*100):
-                    return ts[:(i+1)],ts[(i+1):]
-            else:
-                if(ts[i][0] == today.year and ts[i][1]==today.month):
-                    return ts[:i],ts[i:]
-    elif min(freq) == 0:
-        idx = np.where(today.year*100+today.month==(ts[:,0]*100+ts[:,1]))[0][0]
-        last_idx = np.where(ts[:idx,2+freq.index(0)] != np.nan)[0][-1]
-        Year = ts[last_idx+1,0]
-        Month = ts[last_idx+1,1]
-        for i in range(len(ts)):
-            if cridate < Year*100+Month:
-                if(ts[i][0] == np.floor(cridate/100) and ts[i][1]==cridate-np.floor(cridate/100)*100):
-                    return ts[:(i+1)],ts[(i+1):]
-            else:
-                if(ts[i][0] == Year and ts[i][1]== Month):
-                    return ts[:i],ts[i:]
-    else:
-        for i in range(len(ts)):
-            if(ts[i][0] == today.year and ts[i][1]== 1):
-                return ts[:i],ts[i:]       
-        
         
 def plot_var_x(x,Y):
     l = []
@@ -264,13 +229,7 @@ def plot_var_x(x,Y):
         l.append(Y[i][x])
     plt.plot(l)
     
-def add_time(Y,freq,n,init_date = datetime(1993,1,3)):
-#    date = init_date
-#    X = np.zeros((len(Y),n)).tolist();
-#    for i in range(len(X)):
-#        X[i] = np.insert(X[i],0,date.month)
-#        X[i] = np.insert(X[i],0,date.year)
-#        date = date+relativedelta.relativedelta(months=1)        
+def add_time(Y,freq,n,init_date = datetime(1993,1,3)):   
     
     ts = pd.date_range(init_date,periods=len(Y),freq='M')
     X = np.zeros((len(Y),n+2))
@@ -300,10 +259,6 @@ def output(mod1,Y,freqList, mode = 'diff',path = r"C:\Users\\"):
         macro = ['Macro Type',''] + freqList[1]
     frequency = ['Frequency','']+freq
     headers2 = [["This Macro Type provides the information that for each country whether the training macroeconomic scenario is the change (growth rate/difference) or the level."],['The value "1" means "Change (Growth Rate %)";  the value "0" means "Change (Difference)"; the value "-1" means "Level".']]
-#    if(mode=='diff'):
-#        macro = ['Macro Type',''] + [0 for i in range(n)]
-#    elif(mode=='level'):
-#        macro = ['Macro Type',''] + [-1 for i in range(n)]    
     data_header = ['year','month'] + [str('V'+str(i+1)) for i in range(n)]
     TS = add_time(Y,freq,n)
     Y_prev, Y_after = seperate_generated(TS,freq)
@@ -345,13 +300,6 @@ def output(mod1,Y,freqList, mode = 'diff',path = r"C:\Users\\"):
     senario_headers = [["(i) Please specify the frequency of each selected stress variable, where '1' for monthly data(MoM), '0' for quarter-end data(QoQ), '-1' for year-end data(YoY)"],["(ii) Please fill the time series of the selected stress variables. The quarter-end data will be filled in months 3,6,9,12, and month 12 for the year-end data"],["(iii) Please refer to Table 6 in BuDA White Paper for information on description of the Provided Macroeconomic Variables"],[]]
     frequency = [['','']+data_header[-n:], ['','frequency']+freq,[]]
 
-#    with open(senario_file,'w+',newline='') as csvFile:
-#        writer = csv.writer(csvFile)
-#        writer.writerows(senario_headers)
-#        writer.writerows(frequency)
-#        writer.writerow(data_header)
-#        writer.writerows(Y_after)
-#    csvFile.close()
     data = pd.DataFrame(Y_after)
     writer = pd.ExcelWriter(senario_file,
                         engine='xlsxwriter')
@@ -531,11 +479,6 @@ def backtest(driver,itest):
      driver.find_element_by_id('horizon-input').clear()
      driver.find_element_by_id('horizon-input').send_keys(f'{horizon_month}')
      driver.find_element_by_id('submit-form-btn').click()
-#     now = datetime.now()
-#     s_file = "save_as_xlsx_template_{}-{}-{}T{}-{}-{}.xlsx".format(now.year,now.month,now.day,now.hour,now.minute,now.second) ##different from the time shown on the file 
-#     return s_file
-     #driver.find_element_by_css_selector('.fas.fa-download').click()
-      
     ## advance setting not yet
 
 def test(mode,itest,combination,driver,filename):
@@ -574,7 +517,6 @@ def un_zip(file_name):
 def result_examination(download_path, driver):
     #driver.implicitly_wait(1200)
     ##step1: download final result
-    #driver.find_element_by_css_selector('.fas.fa-download').click()
     element = driver.find_element_by_css_selector('.fas.fa-download')
     driver.execute_script("arguments[0].click();", element)
 
@@ -640,8 +582,7 @@ def Buda_autotest(mode,version,level,freqList=0):
     plt.show()
     Y_diff = take_diff(Y)
     plt.plot(Y_diff)
-    filename = output(mod1,Y_diff,freqList,path = path)
-    
+    filename = output(mod1,Y_diff,freqList,path = path)    
  
     ##test
     test(mode,itest,combination,driver,filename)
@@ -650,7 +591,3 @@ def Buda_autotest(mode,version,level,freqList=0):
     download_path = r'C:\Users\Downloads' ## you may change it  to your own path
     result_examination(download_path, driver)
 
- # #     for itest in combination:
- # #         print(f'{datetime.now()}: testing {count}th starts...')
- # #         test(driver,itest)
- # #         print(f'{datetime.now()}: testing {count}th finishes.../n')
